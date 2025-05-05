@@ -3,8 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="src/styles/index.css" />
-    <script type="module" src="./modules/main.js"></script>
+    <link rel="stylesheet" href="./index.css" />
     <title>Document</title>
   </head>
   <body>
@@ -27,16 +26,16 @@
                 <td>삭제하기</td>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td>000</td>
-                <td>000</td>
-                <td><button type="button">삭제</button></td>
+            <tbody class="data-table-body">
+              <tr class="data-table-row">
+                <td>0</td>
+                <td>0</td>
+                <td><button type="button" class="delete-value-btn">삭제</button></td>
               </tr>
-              <tr>
-                <td>000</td>
-                <td>000</td>
-                <td><button type="button">삭제</button></td>
+              <tr class="data-table-row">
+                <td>1</td>
+                <td>1</td>
+                <td><button type="button" class="delete-value-btn">삭제</button></td>
               </tr>
             </tbody>
           </table>
@@ -46,7 +45,7 @@
       <section>
         <h3>그래프에 값 추가하기</h3>
         <div class="add-value-container">
-          <form action="">
+          <form action="" id="add-value-form">
             <input
               type="text"
               name="graphDataId"
@@ -59,7 +58,7 @@
               id="graphDataValue"
               placeholder="Value"
             />
-            <button>Add</button>
+            <button id="add-value-btn">Add</button>
           </form>
         </div>
       </section>
@@ -72,5 +71,6 @@
         </form>
       </section>
     </main>
+    <script src="./main.js"></script>
   </body>
 </html>
