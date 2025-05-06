@@ -60,7 +60,10 @@ function addValue(e) {
   }
 
   //데이터 추가
+  e.target.graphDataId.value = '';
+  e.target.graphDataValue.value = '';
   addValueAlert.style.opacity = 0;
+  
   addData({ id: dataId, value: dataValue });
 }
 
