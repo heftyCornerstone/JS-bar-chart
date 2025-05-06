@@ -3,34 +3,42 @@ const dataTbody = document.querySelector(".data-table-body");
 
 window.onload = async () => {
   paintScreen();
-  addValueForm.addEventListener("submit", addValue);
+  addValueForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    addValue(e);
+  });
 };
 
-const store = createStore([[0, 0]], [paintTable]);
+const observers = [paintTable];
+const store = createStore(observers, [[0, 0]]);
 
 function paintScreen() {
   paintTable();
 }
 
 function paintTable() {
-  const state = store.getState();
-  let tableRow = "";
+  const state = [...store.getState()];
 
-  [...state].forEach(([id, value]) => {
-    tableRow += `
-    <tr class="data-table-row">
+  dataTbody.innerHTML = "";
+  state.forEach(([id, value]) => {
+    dataTbody.innerHTML += `
+    <tr class=data-table-row">
       <td>${id}</td>
       <td>${value}</td>
-      <td><button type="button" class="delete-value-btn">삭제</button></td>
+      <td><button type="button" class="delete-value-btn" id='delete-${id}'>삭제</button></td>
     </tr>
     `;
   });
-  dataTbody.innerHTML = tableRow;
+
+  state.forEach(([id, _]) => {
+    const deleteBtn = dataTbody.querySelector(`#delete-${id}`);
+    deleteBtn.addEventListener("click", () => {
+      deleteValue(id);
+    });
+  });
 }
 
 function addValue(e) {
-  e.preventDefault();
-
   const { addData } = store;
   const dataId = e.target.graphDataId.value;
   const dataValue = e.target.graphDataValue.value;
@@ -38,7 +46,13 @@ function addValue(e) {
   addData({ id: dataId, value: dataValue });
 }
 
-function createStore(initialState, observers) {
+function deleteValue(id) {
+  const { deleteData } = store;
+
+  deleteData(id);
+}
+
+function createStore(observers, initialState) {
   const state = new Map(initialState);
 
   const notify = () => {
