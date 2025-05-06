@@ -162,25 +162,35 @@ table {
 }
 th,
 td {
-    padding: 0.3rem;
+  padding: 0.3rem;
+}
+.blank-alert-txt {
+  margin-top: 1rem;
+  color: rgb(195, 39, 39);
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
 }
 
-.graph-body{
-    width: 50rem;
-    height: 30rem;
-    background-color: rgb(224, 224, 224);
+.graph-body {
+  width: 50rem;
+  height: 30rem;
+  background-color: rgb(224, 224, 224);
 }
 
-#edit-value-advanced{
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+#add-value-alert {
+  height: 4.5rem;
+  line-height: 1.5rem;
 }
-#edit-value-advanced-txt{
-    width: 40rem;
-    height: 30rem;
-    resize: none;
+#edit-value-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
-#edit-value-advanced-btn{
-    width: 5rem;
+#edit-value-advanced-txt {
+  width: 40rem;
+  height: 30rem;
+  resize: none;
+}
+#edit-value-advanced-btn {
+  width: 5rem;
 }

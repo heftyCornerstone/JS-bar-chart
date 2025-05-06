@@ -1,5 +1,6 @@
 const addValueForm = document.querySelector("#add-value-form");
 const dataTbody = document.querySelector(".data-table-body");
+const addValueAlert = document.querySelector("#add-value-alert");
 
 window.onload = async () => {
   paintScreen();
@@ -10,7 +11,7 @@ window.onload = async () => {
 };
 
 const observers = [paintTable];
-const store = createStore(observers, [[0, 0]]);
+const store = createStore(observers);
 
 function paintScreen() {
   paintTable();
@@ -39,10 +40,27 @@ function paintTable() {
 }
 
 function addValue(e) {
-  const { addData } = store;
+  const { addData, isDataExist } = store;
   const dataId = e.target.graphDataId.value;
   const dataValue = e.target.graphDataValue.value;
+  
+  //입력 유효성 검사
+  const errorList = [];
 
+  const numOnly = /^[0-9]*$/;
+  if(!dataId.match(numOnly) || !dataValue.match(numOnly)) errorList.push(`! id와 값에는 기호를 제외한 숫자만 등록할 수 있습니다`);
+  if (isDataExist(dataId))
+    errorList.push(`! 이미 id가 ${dataId}인 데이터가 존재합니다`);
+  if (!dataId || !dataValue) errorList.push("! id와 값을 모두 입력해주세요");
+
+  if (errorList.length) {
+    addValueAlert.innerHTML=errorList.join('<br>');
+    addValueAlert.style.opacity = 100;
+    return;
+  }
+
+  //데이터 추가
+  addValueAlert.style.opacity = 0;
   addData({ id: dataId, value: dataValue });
 }
 
@@ -52,8 +70,8 @@ function deleteValue(id) {
   deleteData(id);
 }
 
-function createStore(observers, initialState) {
-  const state = new Map(initialState);
+function createStore(observers) {
+  const state = new Map();
 
   const notify = () => {
     observers.forEach((observer) => observer());
@@ -62,8 +80,9 @@ function createStore(observers, initialState) {
   const isDataExist = (id) => state.has(id);
 
   const addData = ({ id, value }) => {
+    console.log(isDataExist(id));
     if (isDataExist(id)) {
-      alert(`이미 id가 ${id}인 데이터가 존재합니다!`);
+      console.error(`이미 id가 ${id}인 데이터가 존재합니다`);
       return;
     }
     state.set(id, value);
