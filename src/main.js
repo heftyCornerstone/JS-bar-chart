@@ -3,6 +3,7 @@ const dataTbody = document.querySelector(".data-table-body");
 const addValueAlert = document.querySelector("#add-value-alert");
 const tableUndoBtn = document.querySelector("#table-editor-undo");
 const tableApplyBtn = document.querySelector("#table-editor-apply");
+const jsonEditor = document.querySelector("#edit-value-advanced-txt");
 
 window.onload = async () => {
   paintScreen();
@@ -14,28 +15,17 @@ window.onload = async () => {
   });
 };
 
-//const mainObservers = [paintTable];
-const mainStore = createStore();
-const tableStore = createStore([paintTable]);
+const observers = {
+  main: [paintJsonEditor],
+  table: [paintTable],
+};
+const mainStore = createStore(observers.main);
+const tableStore = createStore(observers.table);
 
 const paintScreen = () => {
   paintTable();
-};
-
-const applyTableData = () => {
-  const { changeState } = mainStore;
-  const { getState } = tableStore;
-  const newState = getState();
-
-  changeState(newState);
-};
-
-const undoTableData = () => {
-  const { getState } = mainStore;
-  const { changeState } = tableStore;
-  const newState = getState();
-
-  changeState(newState);
+  //paintBarChart
+  paintJsonEditor();
 };
 
 function paintTable() {
@@ -59,6 +49,33 @@ function paintTable() {
     });
   });
 }
+
+function paintJsonEditor() {
+  const state = mainStore.getState();
+  const data = [];
+  state.forEach((value, key) => {
+    data.push({ id: key, value: value });
+  });
+
+  const jsonString = JSON.stringify(data, null, 4);
+  jsonEditor.value = jsonString;
+}
+
+const applyTableData = () => {
+  const { changeState } = mainStore;
+  const { getState } = tableStore;
+  const newState = getState();
+
+  changeState(newState);
+};
+
+const undoTableData = () => {
+  const { getState } = mainStore;
+  const { changeState } = tableStore;
+  const newState = getState();
+
+  changeState(newState);
+};
 
 function addValue(e) {
   const { addData: addMainData } = mainStore;
@@ -88,7 +105,7 @@ function deleteValue(id) {
 }
 
 //스토어 생성
-function createStore(observers=[]) {
+function createStore(observers = []) {
   let state = new Map();
 
   const notify = () => {
@@ -108,7 +125,7 @@ function createStore(observers=[]) {
 
   const isDataExist = (id) => state.has(id);
 
-  const isValidInput = (id = '0', value = '0') => {
+  const isValidInput = (id = "0", value = "0") => {
     const numOnly = /^[0-9]*$/;
     const errorList = [];
 
