@@ -164,7 +164,7 @@ th,
 td {
   padding: 0.3rem;
 }
-.blank-alert-txt {
+.error-alert-txt {
   margin-top: 1rem;
   color: rgb(195, 39, 39);
   opacity: 0;
