@@ -110,7 +110,7 @@ function paintBarChart() {
   //그래프 y축 지표 그리기
   graphFigureNumbers.innerHTML = `
   <p>${inPagesMax}</p>
-  <p>${Math.floor(inPagesMax / 2)}</p>
+  <p>${(inPagesMax / 2).toFixed(1)}</p>
   <p>0</p>`;
   graphPages.innerHTML = `${currentPage}/${pagesAmount}`;
 

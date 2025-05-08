@@ -156,7 +156,7 @@ h3 {
 /*--------------------------------범용--------------------------------*/
 .error-alert-txt {
   margin-top: 1rem;
-  min-height: 1rem;
+  min-height: 1.5rem;
   line-height: 1.5rem;
   color: rgb(195, 39, 39);
   opacity: 0;
@@ -258,6 +258,15 @@ td {
 }
 td {
   padding: 0.3rem;
+}
+.thead-id-column{
+  width: 20%;
+}
+.thead-edit-column{
+  width: 60%
+}
+.thead-delete-column{
+  width: 20%
 }
 
 .data-table-container {
