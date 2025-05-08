@@ -429,7 +429,7 @@ function createStore(observers = []) {
       errorList.push(`! 이미 id가 ${id}인 데이터가 존재합니다.`);
     if (onEditionMap[COMPONENTNAMEMAP.table])
       errorList.push(
-        `팁: 미처 apply하지 않으신 그래프 값 편집하기의 내용을 apply하시고 다시 시도해보세요`
+        `팁: 그래프 값 편집하기로 수정하신 내용을 아직 apply하지 않으셨어요. 그래프 값 편집하기를 undo 해보세요.`
       );
 
     if (!errorList.length) setState({ id, value });
