@@ -78,7 +78,7 @@ function paintBarChart() {
   const [firstIdx, lastIdx] = curPages;
 
   if (mainState.size === 0 || lastIdx === 0) {
-    // 데이터가 없으므로 모든 UI를 초기화하고고 eary return
+    // 데이터가 없으므로 모든 UI를 초기화하고 eary return
     graphFigureNumbers.innerHTML = `<p>100%</p> <p>50%</p> <p>0%</p>`;
     graphPages.innerHTML = "0/0";
 
@@ -228,7 +228,7 @@ function updateTableValue(e) {
   tableEditAlert.innerHTML = "";
   tableEditAlert.style.opacity = 0;
   onEditionSetter(COMPONENTNAMEMAP.table, true);
-  setTableState({id:Number(targetId), value:Number(targetValue)});
+  setTableState({ id: Number(targetId), value: Number(targetValue) });
 }
 
 function deleteTableValue(e) {
@@ -347,10 +347,11 @@ function verifyJsonInput(jsonStr) {
     ];
 
   const jsonPattern =
-    /\[\s*(\{\s*"id"\s*:\s*\d+\s*,\s*"value"\s*:\s*\d+\s*\}\s*,\s*)*\{\s*"id"\s*:\s*\d+\s*,\s*"value"\s*:\s*\d+\s*\}\s*\]/;
+    /^\[\s*(\{\s*"id"\s*:\s*\d+\s*,\s*"value"\s*:\s*\d+\s*\}\s*(,\s*\{\s*"id"\s*:\s*\d+\s*,\s*"value"\s*:\s*\d+\s*\}\s*)*)?\s*\]$/;
   const errorList = [];
   const jsonData = JSON.parse(jsonStr);
   const trimedJsonStr = JSON.stringify(jsonData);
+
   if (!jsonPattern.test(trimedJsonStr))
     errorList.push(
       '입력 내용의 서식이 맞지 않습니다. <br>반드시 숫자 값을 지니는 id와 value를 포함하여 적어주세요. <br>입력 예시: [{"id":2,"value":1},{"id":1,"value":3}]'
@@ -380,6 +381,7 @@ function isParsable(str) {
     return false;
   }
 }
+
 /*----------------------------------------------------JSON 에디터 관리 로직----------------------------------------------------*/
 
 /*---------------------------------------------------스토어 생성 및 관리 로직---------------------------------------------------*/
@@ -585,7 +587,6 @@ function syncGraphMainStore() {
   const mainStateSize = mainState.size;
 
   resetGraphPages(mainStateSize);
-  console.log("sync");
   paintBarChart();
 }
 /*---------------------------------------------------그래프 페이지네이션 로직---------------------------------------------------*/
