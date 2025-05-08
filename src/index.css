@@ -275,15 +275,6 @@ td {
   height: 15rem;
   overflow-y: scroll;
 }
-/* Hide scrollbar : Chrome, Safari, Opera */
-.data-table-container::-webkit-scrollbar {
-  display: none;
-}
-/* Hide scrollbar : IE, Edge, Firefox */
-.data-table-container {
-  -ms-overflow-style: none; /* IE, Edge */
-  scrollbar-width: none; /* Firefox */
-}
 
 #data-table {
   width: 100%;
