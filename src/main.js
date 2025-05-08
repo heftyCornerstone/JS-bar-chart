@@ -78,7 +78,7 @@ function paintBarChart() {
   const [firstIdx, lastIdx] = curPages;
 
   if (mainState.size === 0 || lastIdx === 0) {
-    // 데이터가 없으므로 모든 UI를 초기화하고고 eary return
+    // 데이터가 없으므로 모든 UI를 초기화하고 eary return
     graphFigureNumbers.innerHTML = `<p>100%</p> <p>50%</p> <p>0%</p>`;
     graphPages.innerHTML = "0/0";
 
@@ -381,7 +381,7 @@ function isParsable(str) {
     return false;
   }
 }
-//[[{"id": 1"value": }"id": 3"value": }"id": 5"value": }]]
+
 /*----------------------------------------------------JSON 에디터 관리 로직----------------------------------------------------*/
 
 /*---------------------------------------------------스토어 생성 및 관리 로직---------------------------------------------------*/
