@@ -209,8 +209,11 @@ function debouncedUpdate(e) {
 
 function updateTableValue(e) {
   const numOnly = /^[1-9][0-9]{0,4}$/;
+  const targetId = e.target.id.split("-")[1];
+  const targetValue = e.target.value;
   const isValueNumber = numOnly.test(e.target.value);
   const { onEditionSetter } = observedInputs;
+  const { setState: setTableState } = tableStore;
 
   tableApplyBtn.disabled = !isValueNumber;
   if (!isValueNumber) {
@@ -224,8 +227,8 @@ function updateTableValue(e) {
   e.target.style.outline = "none";
   tableEditAlert.innerHTML = "";
   tableEditAlert.style.opacity = 0;
-
   onEditionSetter(COMPONENTNAMEMAP.table, true);
+  setTableState({id:Number(targetId), value:Number(targetValue)});
 }
 
 function deleteTableValue(e) {
@@ -248,7 +251,6 @@ function applyTableData() {
   syncStores(tableStore, mainStore);
 
   //그래프와 그래프 페이지네이션 초기화
-  console.log("apply");
   syncGraphMainStore();
 }
 
@@ -301,7 +303,7 @@ function checkJsonOnEditTrue() {
 function undoJsonInput() {
   const { onEditionSetter } = observedInputs;
   onEditionSetter(COMPONENTNAMEMAP.jsonEditor, false);
-  
+
   paintJsonEditor();
 }
 
@@ -428,8 +430,6 @@ function createStore(observers = []) {
         `팁: 미처 apply하지 않으신 그래프 값 편집하기의 내용을 apply하시고 다시 시도해보세요`
       );
 
-    //혹시 그래프 값 편집하기의 내용을 아직 apply하지 않으셨나요?
-
     if (!errorList.length) setState({ id, value });
 
     return errorList;
@@ -453,6 +453,7 @@ function createStore(observers = []) {
 
   return {
     changeState,
+    setState,
     addData,
     deleteData,
     isDataExist,
