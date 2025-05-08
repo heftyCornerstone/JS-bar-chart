@@ -46,7 +46,7 @@ const COMPONENTNAMEMAP = {
   table: "table",
   jsonEditor: "jsonEditor",
 };
-const BARSNUM = 5;
+const GRAPHBARSNUM = 5;
 const observers = {
   //그래프는 메인 스토어와 그래프 페이지네이션 데이터간에 sync를 맞출 때마다 자동으로 리렌더링 되므로 observers에 없습니다
   main: [paintJsonEditor, paintTable],
@@ -58,7 +58,7 @@ const observedInputs = createEditionChecker(
   [COMPONENTNAMEMAP.table, COMPONENTNAMEMAP.jsonEditor],
   [toggleUndoBtnsDisabled]
 );
-const graphPage = creatGraphPagenation(0, 5);
+const graphPage = creatGraphPagenation(0, GRAPHBARSNUM);
 /*---------------------------------------------------스토어 및 전역 변수 세팅---------------------------------------------------*/
 
 /*---------------------------------------------------컴포넌트 그리기 관련 로직---------------------------------------------------*/
@@ -82,7 +82,7 @@ function paintBarChart() {
     graphFigureNumbers.innerHTML = `<p>100%</p> <p>50%</p> <p>0%</p>`;
     graphPages.innerHTML = "0/0";
 
-    for (let i = 0; i < BARSNUM; i++) {
+    for (let i = 0; i < GRAPHBARSNUM; i++) {
       const curBar = document.querySelector(`#bar-${i + 1}`);
       const curBarName = document.querySelector(`#bar-name-${i + 1}`);
       const curBarValue = document.querySelector(`#bar-value-${i + 1}`);
@@ -115,7 +115,7 @@ function paintBarChart() {
   graphPages.innerHTML = `${currentPage}/${pagesAmount}`;
 
   //그래프 바 그리기
-  for (let i = 0; i < BARSNUM; i++) {
+  for (let i = 0; i < GRAPHBARSNUM; i++) {
     const [dataId, dataValue] =
       slicedMainState[i] !== undefined ? slicedMainState[i] : ["", 0];
     const curBar = document.querySelector(`#bar-${i + 1}`);
