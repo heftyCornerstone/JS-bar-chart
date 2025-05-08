@@ -82,6 +82,8 @@
 
 ### 1. 표 편집기, 인풋 박스 편집기의 비효율적인 UI 구조로 인한 불편 해결
 
+---
+
 #### 비효율적 UI 구조
 표 편집기는 CRUD에서 RUD 기능, 인풋 박스 편집기는 C기능을 갖고 있음. <br>
 **두가지를 모두 사용하여야 완전한 CRUD** 기능을 사용할 수 있으므로 <br>
@@ -108,7 +110,8 @@
 
 <br><br>
 
-#### 해결
+### 해결
+
 <p align='center'>
 <img width='50%' src='https://velog.velcdn.com/images/heftycornerstone/post/1b614816-ad9d-465b-9a1d-12133773d044/image.png'>
 <p/>
@@ -120,6 +123,8 @@
 <br><br><br>
 
 ### 2. 유저의 망각으로 인한 데이터 수정 충돌 해결
+---
+
 #### 문제 정의
 - 유저가 기록하여 데이터를 수정할 수 있는 편집기는 표 편집기와 고급 편집기로 총 2개
 - 두 편집기 모두 apply 버튼을 눌러야 최종적으로 반영
@@ -130,7 +135,7 @@
 
 <br><br>
 
-#### 해결
+### 해결
 <p align='center'>
 <img width='50%' src='https://velog.velcdn.com/images/heftycornerstone/post/c4cfe6e7-0ea4-4302-9b74-8e5a3b67195f/image.png'>
 <p/>
