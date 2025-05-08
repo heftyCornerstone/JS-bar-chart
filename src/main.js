@@ -42,9 +42,9 @@ window.onload = async () => {
 };
 
 /*---------------------------------------------------스토어 및 전역 변수 세팅---------------------------------------------------*/
-const UNDONAMEMAP = {
-  tableUndoBtn: "table",
-  jsonEditorUndoBtn: "jsonEditor",
+const COMPONENTNAMEMAP = {
+  table: "table",
+  jsonEditor: "jsonEditor",
 };
 const BARSNUM = 5;
 const observers = {
@@ -55,7 +55,7 @@ const observers = {
 const mainStore = createStore(observers.main);
 const tableStore = createStore(observers.table);
 const observedInputs = createEditionChecker(
-  [UNDONAMEMAP.tableUndoBtn, UNDONAMEMAP.jsonEditorUndoBtn],
+  [COMPONENTNAMEMAP.table, COMPONENTNAMEMAP.jsonEditor],
   [toggleUndoBtnsDisabled]
 );
 const graphPage = creatGraphPagenation(0, 5);
@@ -78,9 +78,19 @@ function paintBarChart() {
   const [firstIdx, lastIdx] = curPages;
 
   if (mainState.size === 0 || lastIdx === 0) {
-    // 데이터가 없으므로 그래프 y축 지표, 페이지 갯수를 표시하고 eary return
+    // 데이터가 없으므로 모든 UI를 초기화하고고 eary return
     graphFigureNumbers.innerHTML = `<p>100%</p> <p>50%</p> <p>0%</p>`;
     graphPages.innerHTML = "0/0";
+
+    for (let i = 0; i < BARSNUM; i++) {
+      const curBar = document.querySelector(`#bar-${i + 1}`);
+      const curBarName = document.querySelector(`#bar-name-${i + 1}`);
+      const curBarValue = document.querySelector(`#bar-value-${i + 1}`);
+
+      curBarName.innerHTML = "";
+      curBarValue.innerHTML = "";
+      curBar.style.height = "0";
+    }
     return;
   }
 
@@ -93,7 +103,7 @@ function paintBarChart() {
   const slicedMainState = isOnlyOneBar
     ? mainState[firstIdx][1]
     : mainStateArray.slice(firstIdx, lastIdx + 1);
-  
+
   // 슬라이스한 데이터 내에서 가장 큰 값
   const inPagesMax = Math.max(...slicedValues);
 
@@ -120,8 +130,9 @@ function paintBarChart() {
 }
 
 function paintTable() {
+  const { onEditionGettor } = observedInputs;
+  const onEditionMap = onEditionGettor();
   const tableState = [...tableStore.getState()];
-  const mainState = [...mainStore.getState()];
 
   //테이블 행 그리기
   dataTbody.innerHTML = "";
@@ -136,17 +147,20 @@ function paintTable() {
   });
 
   //apply 버튼 disable 여부 결정하기
-  tableApplyBtn.disabled = mainState.length === 0 ? true : false;
+  const isTableOnEdit = onEditionMap[COMPONENTNAMEMAP.table];
+  tableApplyBtn.disabled = isTableOnEdit ? false : true;
 }
 
 function paintJsonEditor() {
   const state = mainStore.getState();
+
+  //메인 스토어에 저장된 데이터를 json 편집기에 그려주기에 적합한 포맷으로 편집하기
   const data = [];
   state.forEach((value, key) => {
     data.push({ id: Number(key), value: Number(value) });
   });
-
   const jsonString = JSON.stringify(data, null, 4);
+
   const jsonExample = JSON.stringify(
     [
       { id: 1, value: 1 },
@@ -155,6 +169,8 @@ function paintJsonEditor() {
     null,
     4
   );
+
+  //json 편집기 내부에 데이터 그려주기
   const valueExample = `// 입력 예시입니다. 공백과 줄바꿈은 지키지 않아도 됩니다. \n ${jsonExample}`;
   jsonEditor.placeholder = valueExample;
   jsonEditor.value = data.length ? jsonString : "";
@@ -164,6 +180,7 @@ function toggleUndoBtnsDisabled() {
   const { onEditionGettor } = observedInputs;
   const onEditionMap = onEditionGettor();
   const onEditionEntries = Object.entries(onEditionMap);
+
   onEditionEntries.forEach(([componentName, isOnEdit]) => {
     if (componentName === "table") tableUndoBtn.disabled = !isOnEdit;
     if (componentName === "jsonEditor") jsonEditorUndoBtn.disabled = !isOnEdit;
@@ -208,7 +225,7 @@ function updateTableValue(e) {
   tableEditAlert.innerHTML = "";
   tableEditAlert.style.opacity = 0;
 
-  onEditionSetter(UNDONAMEMAP.tableUndoBtn, true);
+  onEditionSetter(COMPONENTNAMEMAP.table, true);
 }
 
 function deleteTableValue(e) {
@@ -219,28 +236,29 @@ function deleteTableValue(e) {
 
   const dataId = Number(e.target.id.split("-")[1]);
 
+  onEditionSetter(COMPONENTNAMEMAP.table, true);
   deleteData(dataId);
-  onEditionSetter(UNDONAMEMAP.tableUndoBtn, true);
-
-  //그래프 페이지네이션 초기화
-  syncGraphMainStore();
 }
 
 function applyTableData() {
   //아직 수정중인 다른 값 편집기가 있다면 진행 여부 질문
-  const isConfirmed = confirmEdition(UNDONAMEMAP.tableUndoBtn);
+  const isConfirmed = confirmEdition(COMPONENTNAMEMAP.table);
   if (!isConfirmed) return;
 
   syncStores(tableStore, mainStore);
 
-  //그래프 페이지네이션 초기화
+  //그래프와 그래프 페이지네이션 초기화
+  console.log("apply");
   syncGraphMainStore();
 }
 
 function undoTableData() {
+  const { onEditionSetter } = observedInputs;
   syncStores(mainStore, tableStore);
+
+  onEditionSetter(COMPONENTNAMEMAP.table, false);
 }
-/*----------------------------------------------------데이터 테이블 관리 로직----------------------------------------------------*/
+/*----------------------------------------------------데이터 테이블 UI 로직----------------------------------------------------*/
 
 /*--------------------------------------------------데이터 추가하기 로직--------------------------------------------------*/
 function addValue(e) {
@@ -264,7 +282,7 @@ function addValue(e) {
 
   addTableData({ id: dataId, value: dataValue });
 
-  //그래프 페이지네이션 초기화
+  //그래프와 그래프 페이지네이션 초기화
   syncGraphMainStore();
 
   e.target.graphDataId.value = "";
@@ -277,10 +295,13 @@ function addValue(e) {
 /*----------------------------------------------------JSON 에디터 관리 로직----------------------------------------------------*/
 function checkJsonOnEditTrue() {
   const { onEditionSetter } = observedInputs;
-  onEditionSetter(UNDONAMEMAP.jsonEditorUndoBtn, true);
+  onEditionSetter(COMPONENTNAMEMAP.jsonEditor, true);
 }
 
 function undoJsonInput() {
+  const { onEditionSetter } = observedInputs;
+  onEditionSetter(COMPONENTNAMEMAP.jsonEditor, false);
+  
   paintJsonEditor();
 }
 
@@ -299,7 +320,7 @@ function applyJsonInput(e) {
   }
 
   //아직 수정중인 다른 값 편집기가 있다면 진행 여부 질문
-  const isConfirmed = confirmEdition(UNDONAMEMAP.jsonEditorUndoBtn);
+  const isConfirmed = confirmEdition(COMPONENTNAMEMAP.jsonEditor);
   if (!isConfirmed) return;
 
   //메인 스토어와 테이블 스토어 업데이트
@@ -313,7 +334,7 @@ function applyJsonInput(e) {
   changeMainState(newState);
   syncStores(mainStore, tableStore);
 
-  //그래프 페이지네이션 초기화
+  //그래프와 그래프 페이지네이션 초기화
   syncGraphMainStore();
 }
 
@@ -402,7 +423,7 @@ function createStore(observers = []) {
       errorList.push("! id와 값을 모두 입력해주세요");
     if (isDataExist(id))
       errorList.push(`! 이미 id가 ${id}인 데이터가 존재합니다.`);
-    if (onEditionMap[UNDONAMEMAP.tableUndoBtn])
+    if (onEditionMap[COMPONENTNAMEMAP.table])
       errorList.push(
         `팁: 미처 apply하지 않으신 그래프 값 편집하기의 내용을 apply하시고 다시 시도해보세요`
       );
@@ -532,7 +553,7 @@ function creatGraphPagenation(maxPage, pages) {
     }
     const newFirstPage = curPages[0] - pages;
     curPages[0] = newFirstPage;
-    curPages[1] = newFirstPage+pages;
+    curPages[1] = newFirstPage + pages;
     currentPage -= 1;
   };
 
@@ -563,6 +584,7 @@ function syncGraphMainStore() {
   const mainStateSize = mainState.size;
 
   resetGraphPages(mainStateSize);
+  console.log("sync");
   paintBarChart();
 }
 /*---------------------------------------------------그래프 페이지네이션 로직---------------------------------------------------*/

@@ -132,7 +132,8 @@ table {
 
 /*--------------------------------태그--------------------------------*/
 header {
-  width: 100%;
+  padding-top: 3rem;
+  width: 90%;
   text-align: right;
 }
 main {
@@ -281,6 +282,7 @@ td {
 #data-table thead {
   position: sticky;
   top: 0;
+  border: 1px solid black;
   background-color: white;
 }
 /*--------------------------------데이터 테이블--------------------------------*/
