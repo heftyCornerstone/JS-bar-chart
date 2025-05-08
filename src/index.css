@@ -130,6 +130,7 @@ table {
 }
 /*--------------------------------CSS reset--------------------------------*/
 
+/*--------------------------------태그--------------------------------*/
 header {
   width: 100%;
   text-align: right;
@@ -149,27 +150,60 @@ h3 {
   font-weight: bold;
   margin-bottom: 2rem;
 }
+/*--------------------------------태그--------------------------------*/
 
-table,
-th,
-td {
-  border: 1px solid black;
-  border-collapse: collapse;
-  text-align: center;
-}
-table {
-  width: 100%;
-}
-th,
-td {
-  padding: 0.3rem;
-}
+/*--------------------------------범용--------------------------------*/
 .error-alert-txt {
   margin-top: 1rem;
   color: rgb(195, 39, 39);
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
 }
+/*--------------------------------범용--------------------------------*/
+
+/*--------------------------------데이터 테이블--------------------------------*/
+table,
+td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  text-align: center;
+}
+td {
+  padding: 0.3rem;
+}
+
+.data-table-container {
+  margin-bottom: 2rem;
+  width: 100%;
+  height: 15rem;
+  overflow-y: scroll;
+}
+/* Hide scrollbar : Chrome, Safari, Opera */
+.data-table-container::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar : IE, Edge, Firefox */
+.data-table-container {
+  -ms-overflow-style: none; /* IE, Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+#data-table {
+  width: 100%;
+}
+#data-table thead {
+  position: sticky;
+  top: 0;
+  background-color: white;
+}
+/*--------------------------------데이터 테이블--------------------------------*/
+
+/*--------------------------------데이터 추가하기--------------------------------*/
+#add-value-alert {
+  height: 4.5rem;
+  line-height: 1.5rem;
+}
+/*--------------------------------데이터 추가하기--------------------------------*/
 
 .graph-body {
   width: 50rem;
@@ -177,10 +211,7 @@ td {
   background-color: rgb(224, 224, 224);
 }
 
-#add-value-alert {
-  height: 4.5rem;
-  line-height: 1.5rem;
-}
+/*--------------------------------Json 편집기--------------------------------*/
 #edit-value-advanced {
   display: flex;
   flex-direction: column;
@@ -194,3 +225,4 @@ td {
 #edit-value-advanced-btn {
   width: 5rem;
 }
+/*--------------------------------Json 편집기--------------------------------*/

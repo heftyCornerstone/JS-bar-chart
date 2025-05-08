@@ -18,20 +18,23 @@
       <section>
         <h3>그래프 값 편집하기</h3>
         <div class="table-editor-container">
-          <table>
-            <thead>
-              <tr>
-                <td>ID</td>
-                <td>값</td>
-                <td>삭제하기</td>
-              </tr>
-            </thead>
-            <tbody class="data-table-body"></tbody>
-          </table>
+          <div class="data-table-container">
+            <table id="data-table">
+              <thead>
+                <tr>
+                  <td>ID</td>
+                  <td>값 수정하기</td>
+                  <td>삭제하기</td>
+                </tr>
+              </thead>
+              <tbody class="data-table-body"></tbody>
+            </table>
+          </div>
           <div class="table-editor-btns">
             <button id="table-editor-undo">Undo</button>
             <button id="table-editor-apply">Apply</button>
           </div>
+          <div class="error-alert-txt" id="table-edit-alert"></div>
         </div>
       </section>
 

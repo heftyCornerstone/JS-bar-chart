@@ -1,14 +1,24 @@
 const addValueForm = document.querySelector("#add-value-form");
-const dataTbody = document.querySelector(".data-table-body");
 const addValueAlert = document.querySelector("#add-value-alert");
+const dataTable = document.querySelector("#data-table");
+const dataTbody = document.querySelector(".data-table-body");
 const tableUndoBtn = document.querySelector("#table-editor-undo");
 const tableApplyBtn = document.querySelector("#table-editor-apply");
+const tableEditAlert = document.querySelector("#table-edit-alert");
 const jsonEditorForm = document.querySelector("#edit-value-advanced");
 const jsonEditor = document.querySelector("#edit-value-advanced-txt");
 const jsonEditorAlert = document.querySelector("#edit-value-advanced-alert");
 
 window.onload = async () => {
   paintScreen();
+  dataTable.addEventListener("click", (e) => {
+    const isDeleteBtn = e.target.classList.contains("delete-value-btn");
+    if (isDeleteBtn) deleteTableValue(e);
+  });
+  dataTable.addEventListener("input", (e) => {
+    const isUpdateInput = e.target.classList.contains("update-value-input");
+    if (isUpdateInput) debouncedUpdate(e);
+  });
   tableUndoBtn.addEventListener("click", undoTableData);
   tableApplyBtn.addEventListener("click", applyTableData);
   addValueForm.addEventListener("submit", (e) => {
@@ -21,7 +31,7 @@ window.onload = async () => {
   });
 };
 
-/*---------------------------------------------스토어 및 전역 상태 세팅------------------------------------------------------*/
+/*---------------------------------------------------스토어 및 전역 상태 세팅---------------------------------------------------*/
 const observers = {
   main: [paintJsonEditor, paintTable],
   table: [paintTable],
@@ -30,9 +40,9 @@ const mainStore = createStore(observers.main);
 const tableStore = createStore(observers.table);
 //const observedInputs = createEditionChecker(["table", "jsonEditor"]);
 //이벤트 위임으로 처리하기
-/*---------------------------------------------스토어 및 전역 상태 세팅------------------------------------------------------*/
+/*---------------------------------------------------스토어 및 전역 상태 세팅---------------------------------------------------*/
 
-/*---------------------------------------------컴포넌트 그리기 관련 로직------------------------------------------------------*/
+/*---------------------------------------------------컴포넌트 그리기 관련 로직---------------------------------------------------*/
 
 function paintScreen() {
   paintTable();
@@ -48,18 +58,12 @@ function paintTable() {
     dataTbody.innerHTML += `
     <tr class=data-table-row">
       <td>${id}</td>
-      <td><input type="text" value="${value}"></td>
+      <td><input type="text" value="${value}" class="update-value-input" id="update-${id}"></td>
       <td><button type="button" class="delete-value-btn" id='delete-${id}'>삭제</button></td>
     </tr>
     `;
   });
-
-  state.forEach(([id, _]) => {
-    const deleteBtn = dataTbody.querySelector(`#delete-${id}`);
-    deleteBtn.addEventListener("click", () => {
-      deleteValue(id);
-    });
-  });
+  tableApplyBtn.disabled = dataTbody.innerHTML === "" ? true : false;
 }
 
 function paintJsonEditor() {
@@ -84,13 +88,40 @@ function paintJsonEditor() {
     : (jsonEditor.placeholder = valueExample);
 }
 
-/*---------------------------------------------컴포넌트 그리기 관련 로직------------------------------------------------------*/
+/*---------------------------------------------------컴포넌트 그리기 관련 로직---------------------------------------------------*/
 
-/*-----------------------------------------------데이터 테이블 관리 로직------------------------------------------------------*/
-function deleteValue(id) {
+/*----------------------------------------------------데이터 테이블 관리 로직----------------------------------------------------*/
+function debouncedUpdate(e) {
+  const debouncedUpdate = debounce(updateTableValue, 500);
+  debouncedUpdate(e);
+}
+
+function updateTableValue(e) {
+  const numOnly = /^[0-9]+$/;
+  const isValueNumber = numOnly.test(e.target.value);
+
+  tableApplyBtn.disabled = !isValueNumber;
+  if (!isValueNumber) {
+    e.target.style.outline = "0.15rem solid red";
+    tableEditAlert.innerHTML =
+      "! 값에는 공백과 기호를 제외한 숫자만 등록할 수 있습니다.";
+    tableEditAlert.style.opacity = 100;
+    return;
+  }
+
+  e.target.style.outline = "none";
+  tableEditAlert.innerHTML = ""
+  tableEditAlert.style.opacity = 0;
+}
+
+function deleteTableValue(e) {
   const { deleteData } = tableStore;
+  const isDeleteBtn = e.target.classList.contains("delete-value-btn");
+  if (!isDeleteBtn) return;
 
-  deleteData(id);
+  const dataId = Number(e.target.id.split("-")[1]);
+
+  deleteData(dataId);
 }
 
 function applyTableData() {
@@ -100,21 +131,19 @@ function applyTableData() {
 function undoTableData() {
   syncStores(mainStore, tableStore);
 }
-/*-----------------------------------------------데이터 테이블 관리 로직------------------------------------------------------*/
+/*----------------------------------------------------데이터 테이블 관리 로직----------------------------------------------------*/
 
 /*--------------------------------------------------데이터 추가 인풋 박스 로직--------------------------------------------------*/
 function addValue(e) {
   const { addData: addMainData } = mainStore;
   const { addData: addTableData } = tableStore;
-  const numOnly = /^[0-9]*$/;
+  const numOnly = /^[0-9]+$/;
   const rawDataId = e.target.graphDataId.value;
   const rawDataValue = e.target.graphDataValue.value;
-  const dataId =
-    numOnly.test(rawDataId) && rawDataId !== "" ? Number(rawDataId) : rawDataId;
-  const dataValue =
-    numOnly.test(rawDataValue) && rawDataValue !== ""
-      ? Number(rawDataValue)
-      : rawDataValue;
+  const dataId = numOnly.test(rawDataId) ? Number(rawDataId) : rawDataId;
+  const dataValue = numOnly.test(rawDataValue)
+    ? Number(rawDataValue)
+    : rawDataValue;
 
   const errorList = addMainData({ id: dataId, value: dataValue });
 
@@ -134,7 +163,7 @@ function addValue(e) {
 }
 /*--------------------------------------------------데이터 추가 인풋 박스 로직--------------------------------------------------*/
 
-/*------------------------------------------------JSON 에디터 관리 로직-------------------------------------------------------*/
+/*----------------------------------------------------JSON 에디터 관리 로직----------------------------------------------------*/
 function applyJsonInput(e) {
   const { changeState: changeMainState } = mainStore;
   const jsonStr = e.target["edit-value-advanced-txt"].value;
@@ -199,9 +228,9 @@ function isParsable(str) {
     return false;
   }
 }
-/*------------------------------------------------JSON 에디터 관리 로직-------------------------------------------------------*/
+/*----------------------------------------------------JSON 에디터 관리 로직----------------------------------------------------*/
 
-/*-----------------------------------------------스토어 생성 및 관리 로직------------------------------------------------------*/
+/*---------------------------------------------------스토어 생성 및 관리 로직---------------------------------------------------*/
 function createStore(observers = []) {
   let state = new Map();
 
@@ -229,7 +258,7 @@ function createStore(observers = []) {
     );
 
     if (invalidItems.length)
-      errorList.push(`! id와 값에는 기호를 제외한 숫자만 등록할 수 있습니다`);
+      errorList.push(`! id와 값에는 공백과 기호를 제외한 숫자만 등록할 수 있습니다`);
 
     return errorList;
   };
@@ -281,7 +310,9 @@ function createStore(observers = []) {
   };
 
   const deleteData = (id) => {
-    const errorList = [...isValidInput(Number(id))];
+    if (typeof id !== "number") return ["id의 type이 number가 아닙니다"];
+
+    const errorList = [...isValidInput(id)];
 
     //입력값 유효성 검사
     if (!isDataExist(id)) errorList.push(`! id가 ${id}인 데이터가 없습니다.`);
@@ -317,7 +348,9 @@ function syncStores(originStore, takerStore) {
 
   changeState(newState);
 }
-/*-----------------------------------------------스토어 생성 및 관리 로직------------------------------------------------------*/
+/*---------------------------------------------------스토어 생성 및 관리 로직---------------------------------------------------*/
+
+/*-----------------------------------------------------전역 상태 생성 로직-----------------------------------------------------*/
 
 // function createEditionChecker(checkList = []) {
 //   const onEditionInputs = {};
@@ -339,3 +372,17 @@ function syncStores(originStore, takerStore) {
 
 //   return { getOnEditionInputs, onEditionSetter };
 // };
+
+/*-----------------------------------------------------전역 상태 생성 로직-----------------------------------------------------*/
+
+/*-------------------------------------------------------기타 범용 로직-------------------------------------------------------*/
+function debounce(func, delay) {
+  let prevEvent;
+  return (...args) => {
+    clearTimeout(prevEvent);
+    prevEvent = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+}
+/*-------------------------------------------------------기타 범용 로직-------------------------------------------------------*/
