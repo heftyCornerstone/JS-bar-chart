@@ -155,6 +155,8 @@ h3 {
 /*--------------------------------범용--------------------------------*/
 .error-alert-txt {
   margin-top: 1rem;
+  min-height: 1rem;
+  line-height: 1.5rem;
   color: rgb(195, 39, 39);
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
@@ -201,7 +203,6 @@ td {
 /*--------------------------------데이터 추가하기--------------------------------*/
 #add-value-alert {
   height: 4.5rem;
-  line-height: 1.5rem;
 }
 /*--------------------------------데이터 추가하기--------------------------------*/
 
@@ -222,7 +223,7 @@ td {
   height: 30rem;
   resize: none;
 }
-#edit-value-advanced-btn {
+.edit-value-advanced-btn {
   width: 5rem;
 }
 /*--------------------------------Json 편집기--------------------------------*/

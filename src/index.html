@@ -31,7 +31,7 @@
             </table>
           </div>
           <div class="table-editor-btns">
-            <button id="table-editor-undo">Undo</button>
+            <button id="table-editor-undo" disabled>Undo</button>
             <button id="table-editor-apply">Apply</button>
           </div>
           <div class="error-alert-txt" id="table-edit-alert"></div>
@@ -65,7 +65,19 @@
         <div>
           <form action="" id="edit-value-advanced">
             <textarea name="" id="edit-value-advanced-txt"></textarea>
-            <button id="edit-value-advanced-btn">Apply</button>
+            <div class="table-editor-btns">
+              <button
+                class="edit-value-advanced-btn"
+                id="json-editor-undo"
+                type="button"
+                disabled
+              >
+                Undo
+              </button>
+              <button class="edit-value-advanced-btn" id="json-editor-apply">
+                Apply
+              </button>
+            </div>
           </form>
           <div class="error-alert-txt" id="edit-value-advanced-alert"></div>
         </div>

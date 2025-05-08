@@ -7,6 +7,7 @@ const tableApplyBtn = document.querySelector("#table-editor-apply");
 const tableEditAlert = document.querySelector("#table-edit-alert");
 const jsonEditorForm = document.querySelector("#edit-value-advanced");
 const jsonEditor = document.querySelector("#edit-value-advanced-txt");
+const jsonEditorUndoBtn = document.querySelector("#json-editor-undo");
 const jsonEditorAlert = document.querySelector("#edit-value-advanced-alert");
 
 window.onload = async () => {
@@ -29,18 +30,27 @@ window.onload = async () => {
     e.preventDefault();
     applyJsonInput(e);
   });
+  jsonEditorForm.addEventListener("input", checkJsonOnEditTrue);
+  jsonEditorUndoBtn.addEventListener("click", undoJsonInput);
 };
 
-/*---------------------------------------------------스토어 및 전역 상태 세팅---------------------------------------------------*/
+/*---------------------------------------------------스토어 및 전역 변수 세팅---------------------------------------------------*/
+const UNDONAMEMAP = {
+  tableUndoBtn: "table",
+  jsonEditorUndoBtn: "jsonEditor",
+};
 const observers = {
   main: [paintJsonEditor, paintTable],
   table: [paintTable],
 };
 const mainStore = createStore(observers.main);
 const tableStore = createStore(observers.table);
-//const observedInputs = createEditionChecker(["table", "jsonEditor"]);
+const observedInputs = createEditionChecker(
+  [UNDONAMEMAP.tableUndoBtn, UNDONAMEMAP.jsonEditorUndoBtn],
+  [toggleUndoBtnsDisabled]
+);
 //이벤트 위임으로 처리하기
-/*---------------------------------------------------스토어 및 전역 상태 세팅---------------------------------------------------*/
+/*---------------------------------------------------스토어 및 전역 변수 세팅---------------------------------------------------*/
 
 /*---------------------------------------------------컴포넌트 그리기 관련 로직---------------------------------------------------*/
 
@@ -51,10 +61,11 @@ function paintScreen() {
 }
 
 function paintTable() {
-  const state = [...tableStore.getState()];
+  const tableState = [...tableStore.getState()];
+  const mainState = [...mainStore.getState()];
 
   dataTbody.innerHTML = "";
-  state.forEach(([id, value]) => {
+  tableState.forEach(([id, value]) => {
     dataTbody.innerHTML += `
     <tr class=data-table-row">
       <td>${id}</td>
@@ -63,7 +74,7 @@ function paintTable() {
     </tr>
     `;
   });
-  tableApplyBtn.disabled = dataTbody.innerHTML === "" ? true : false;
+  tableApplyBtn.disabled = mainState.length === 0 ? true : false;
 }
 
 function paintJsonEditor() {
@@ -83,11 +94,19 @@ function paintJsonEditor() {
     4
   );
   const valueExample = `// 입력 예시입니다. 공백과 줄바꿈은 지키지 않아도 됩니다. \n ${jsonExample}`;
-  data.length
-    ? (jsonEditor.value = jsonString)
-    : (jsonEditor.placeholder = valueExample);
+  jsonEditor.placeholder = valueExample;
+  jsonEditor.value = data.length ? jsonString : "";
 }
 
+function toggleUndoBtnsDisabled() {
+  const { onEditionGettor } = observedInputs;
+  const onEditionMap = onEditionGettor();
+  const onEditionEntries = Object.entries(onEditionMap);
+  onEditionEntries.forEach(([componentName, isOnEdit]) => {
+    if (componentName === "table") tableUndoBtn.disabled = !isOnEdit;
+    if (componentName === "jsonEditor") jsonEditorUndoBtn.disabled = !isOnEdit;
+  });
+}
 /*---------------------------------------------------컴포넌트 그리기 관련 로직---------------------------------------------------*/
 
 /*----------------------------------------------------데이터 테이블 관리 로직----------------------------------------------------*/
@@ -97,24 +116,28 @@ function debouncedUpdate(e) {
 }
 
 function updateTableValue(e) {
-  const numOnly = /^[0-9]+$/;
+  const numOnly = /^[1-9][0-9]*$/;
   const isValueNumber = numOnly.test(e.target.value);
+  const { onEditionSetter } = observedInputs;
 
   tableApplyBtn.disabled = !isValueNumber;
   if (!isValueNumber) {
-    e.target.style.outline = "0.15rem solid red";
+    e.target.style.outline = "0.15rem solid rgb(195, 39, 39)";
     tableEditAlert.innerHTML =
-      "! 값에는 공백과 기호를 제외한 숫자만 등록할 수 있습니다.";
+      "! 값에는 자연수만 등록할 수 있습니다.";
     tableEditAlert.style.opacity = 100;
     return;
   }
 
   e.target.style.outline = "none";
-  tableEditAlert.innerHTML = ""
+  tableEditAlert.innerHTML = "";
   tableEditAlert.style.opacity = 0;
+
+  onEditionSetter(UNDONAMEMAP.tableUndoBtn, true);
 }
 
 function deleteTableValue(e) {
+  const { onEditionSetter } = observedInputs;
   const { deleteData } = tableStore;
   const isDeleteBtn = e.target.classList.contains("delete-value-btn");
   if (!isDeleteBtn) return;
@@ -122,9 +145,14 @@ function deleteTableValue(e) {
   const dataId = Number(e.target.id.split("-")[1]);
 
   deleteData(dataId);
+  onEditionSetter(UNDONAMEMAP.tableUndoBtn, true);
 }
 
 function applyTableData() {
+  //아직 수정중인 다른 값 편집기가 있다면 진행 여부 질문
+  const isConfirmed = confirmEdition();
+  if (!isConfirmed) return;
+
   syncStores(tableStore, mainStore);
 }
 
@@ -133,11 +161,11 @@ function undoTableData() {
 }
 /*----------------------------------------------------데이터 테이블 관리 로직----------------------------------------------------*/
 
-/*--------------------------------------------------데이터 추가 인풋 박스 로직--------------------------------------------------*/
+/*--------------------------------------------------데이터 추가하기 로직--------------------------------------------------*/
 function addValue(e) {
   const { addData: addMainData } = mainStore;
   const { addData: addTableData } = tableStore;
-  const numOnly = /^[0-9]+$/;
+  const numOnly = /^[1-9][0-9]*$/;
   const rawDataId = e.target.graphDataId.value;
   const rawDataValue = e.target.graphDataValue.value;
   const dataId = numOnly.test(rawDataId) ? Number(rawDataId) : rawDataId;
@@ -153,17 +181,24 @@ function addValue(e) {
     return;
   }
 
-  // json 편집기의 내용은 보존하지 않는다는 점 고지, 그래도 괜찮을지 묻기.
-
   addTableData({ id: dataId, value: dataValue });
   e.target.graphDataId.value = "";
   e.target.graphDataValue.value = "";
   addValueAlert.innerHTML = "";
   addValueAlert.style.opacity = 0;
 }
-/*--------------------------------------------------데이터 추가 인풋 박스 로직--------------------------------------------------*/
+/*--------------------------------------------------데이터 추가하기 로직--------------------------------------------------*/
 
 /*----------------------------------------------------JSON 에디터 관리 로직----------------------------------------------------*/
+function checkJsonOnEditTrue() {
+  const { onEditionSetter } = observedInputs;
+  onEditionSetter(UNDONAMEMAP.jsonEditorUndoBtn, true);
+}
+
+function undoJsonInput() {
+  paintJsonEditor();
+}
+
 function applyJsonInput(e) {
   const { changeState: changeMainState } = mainStore;
   const jsonStr = e.target["edit-value-advanced-txt"].value;
@@ -174,9 +209,13 @@ function applyJsonInput(e) {
   if (errorList.length !== 0) {
     jsonEditorAlert.innerHTML = errorList.join("\n");
     jsonEditorAlert.style.opacity = 100;
+    jsonEditor.style.outline = "0.15rem solid rgb(195, 39, 39)";
     return;
   }
-  //테이블 상태도 업데이트 해야하므로 만일 테이블에 반영되지 않은 수정 내용이 있다면 재차 물어볼 것.
+
+  //아직 수정중인 다른 값 편집기가 있다면 진행 여부 질문
+  const isConfirmed = confirmEdition();
+  if (!isConfirmed) return;
 
   //메인 스토어와 테이블 스토어 업데이트
   const jsonData = JSON.parse(jsonStr);
@@ -185,6 +224,7 @@ function applyJsonInput(e) {
 
   jsonEditorAlert.innerHTML = "";
   jsonEditorAlert.style.opacity = 0;
+  jsonEditor.style.outline = "none";
   changeMainState(newState);
   syncStores(mainStore, tableStore);
 }
@@ -192,7 +232,7 @@ function applyJsonInput(e) {
 function verifyJsonInput(jsonStr) {
   if (!isParsable(jsonStr))
     return [
-      '입력하신 서식이 JSON이 아닙니다. 다시 입력해주세요. 입력 예시: [{"id":0,"value":0},{"id":1,"value":3}]',
+      '입력하신 서식이 JSON이 아닙니다. 다시 입력해주세요. <br>입력 예시: [{"id":0,"value":0},{"id":1,"value":3}]',
     ];
 
   const jsonPattern =
@@ -202,7 +242,7 @@ function verifyJsonInput(jsonStr) {
   const trimedJsonStr = JSON.stringify(jsonData);
   if (!jsonPattern.test(trimedJsonStr))
     errorList.push(
-      '입력 내용의 서식이 맞지 않습니다. \n반드시 숫자 값을 지니는 id와 value를 포함하여 적어주세요. \n입력 예시: [{"id":0,"value":0},{"id":1,"value":3}]'
+      '입력 내용의 서식이 맞지 않습니다. <br>반드시 숫자 값을 지니는 id와 value를 포함하여 적어주세요. <br>입력 예시: [{"id":0,"value":0},{"id":1,"value":3}]'
     );
 
   const idSet = new Set();
@@ -222,6 +262,7 @@ function verifyJsonInput(jsonStr) {
 
 function isParsable(str) {
   try {
+    if (!isNaN(Number(str))) return false;
     JSON.parse(str);
     return true;
   } catch (e) {
@@ -258,7 +299,9 @@ function createStore(observers = []) {
     );
 
     if (invalidItems.length)
-      errorList.push(`! id와 값에는 공백과 기호를 제외한 숫자만 등록할 수 있습니다`);
+      errorList.push(
+        `! id와 값에는 자연수만 등록할 수 있습니다`
+      );
 
     return errorList;
   };
@@ -273,37 +316,6 @@ function createStore(observers = []) {
       errorList.push(`! 이미 id가 ${id}인 데이터가 존재합니다.`);
     //혹시 그래프 값 편집하기의 내용을 아직 apply하지 않으셨나요?
 
-    if (!errorList.length) setState({ id, value });
-
-    return errorList;
-  };
-
-  const updateData = (inputList) => {
-    const errorList = [
-      /*...isValidInput(id, value)*/
-    ];
-
-    //입력값 유효성 검사
-    const noIdList = [];
-    let notPairedNum = 0;
-    for (const data of inputList) {
-      if (!data.id || !data.value) {
-        notPairedNum += 1;
-        continue;
-      }
-      if (!isDataExist(data.id)) noIdList.push(id);
-    }
-
-    if (!noIdList.length)
-      errorList.push(
-        `! 다음 아이디는 데이터베이스에 존재하지 않습니다 : ${noIdList.join(
-          ", "
-        )}`
-      );
-    if (!notPairedNum)
-      errorList.push(
-        `! 아이디와 값을 모두 입력하지 않은 데이터가 ${notPairedNum}개 있어요`
-      );
     if (!errorList.length) setState({ id, value });
 
     return errorList;
@@ -328,7 +340,6 @@ function createStore(observers = []) {
   return {
     changeState,
     addData,
-    updateData,
     deleteData,
     isDataExist,
     subscribe: (observer) => observers.push(observer),
@@ -350,30 +361,61 @@ function syncStores(originStore, takerStore) {
 }
 /*---------------------------------------------------스토어 생성 및 관리 로직---------------------------------------------------*/
 
-/*-----------------------------------------------------전역 상태 생성 로직-----------------------------------------------------*/
+/*-----------------------------------------------------작성중 여부 기록 로직-----------------------------------------------------*/
 
-// function createEditionChecker(checkList = []) {
-//   const onEditionInputs = {};
-//   checkList.forEach((checkItem) => {
-//     onEditionInputs[checkItem] = false;
-//   });
+function createEditionChecker(checkList = [], observers = []) {
+  const onEditionInputs = {};
+  checkList.forEach((checkItem) => {
+    onEditionInputs[checkItem] = false;
+  });
 
-//   const getOnEditionInputs = () => {
-//     return { ...onEditionInputs };
-//   };
+  const notify = () => {
+    if (!observers.length) return;
+    observers.forEach((observer) => observer());
+  };
 
-//   const onEditionSetter = (name, bool) => {
-//     if (!onEditionInputs[name]) {
-//       console.error(`${name}이 onEditionInputs에 존재하지 않습니다`);
-//       return;
-//     }
-//     onEditionInputs[name] = bool;
-//   };
+  const onEditionGettor = () => {
+    return { ...onEditionInputs };
+  };
 
-//   return { getOnEditionInputs, onEditionSetter };
-// };
+  const onEditionSetter = (name, bool) => {
+    if (onEditionInputs[name] === undefined) {
+      console.error(`${name}이 onEditionInputs에 존재하지 않습니다`);
+      return;
+    }
+    if (typeof bool !== "boolean") {
+      console.error(
+        `두번째 인자의 type이 boolean이 아닌 ${typeof bool}입니다.`
+      );
+      return;
+    }
+    onEditionInputs[name] = bool;
+    notify();
+  };
 
-/*-----------------------------------------------------전역 상태 생성 로직-----------------------------------------------------*/
+  return { onEditionGettor, onEditionSetter };
+}
+
+function confirmEdition() {
+  const { onEditionGettor, onEditionSetter } = observedInputs;
+  const isOnEditMap = onEditionGettor();
+  const isOnEditMapEntries = Object.entries(isOnEditMap);
+  const isOnEdit = isOnEditMapEntries.some(([key, value]) => value === true);
+
+  if (isOnEdit) {
+    const isConfirmed = confirm(
+      "다른 편집기에서 \n아직 Apply하지 않으신 수정 내용이 사라집니다. \n진행할까요?"
+    );
+    if (!isConfirmed) return false;
+  }
+
+  //수정중 여부 업데이트
+  isOnEditMapEntries.forEach(([key, value]) => {
+    onEditionSetter(key, false);
+  });
+  return true;
+}
+/*-----------------------------------------------------작성중 여부 기록 로직-----------------------------------------------------*/
 
 /*-------------------------------------------------------기타 범용 로직-------------------------------------------------------*/
 function debounce(func, delay) {
