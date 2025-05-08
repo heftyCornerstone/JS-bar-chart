@@ -9,6 +9,11 @@ const jsonEditorForm = document.querySelector("#edit-value-advanced");
 const jsonEditor = document.querySelector("#edit-value-advanced-txt");
 const jsonEditorUndoBtn = document.querySelector("#json-editor-undo");
 const jsonEditorAlert = document.querySelector("#edit-value-advanced-alert");
+const graphBarContainer = document.querySelector(".graph-bar-container");
+const graphFigureNumbers = document.querySelector(".graph-figure-numbers");
+const graphPrevBtn = document.querySelector("#graph-view-prev");
+const graphNextBtn = document.querySelector("#graph-view-next");
+const graphPages = document.querySelector("#graph-view-page");
 
 window.onload = async () => {
   paintScreen();
@@ -39,6 +44,7 @@ const UNDONAMEMAP = {
   tableUndoBtn: "table",
   jsonEditorUndoBtn: "jsonEditor",
 };
+const BARSNUM = 5;
 const observers = {
   main: [paintJsonEditor, paintTable],
   table: [paintTable],
@@ -49,15 +55,59 @@ const observedInputs = createEditionChecker(
   [UNDONAMEMAP.tableUndoBtn, UNDONAMEMAP.jsonEditorUndoBtn],
   [toggleUndoBtnsDisabled]
 );
-//이벤트 위임으로 처리하기
+const graphPage = creatGraphPagenation(0, 5);
 /*---------------------------------------------------스토어 및 전역 변수 세팅---------------------------------------------------*/
 
 /*---------------------------------------------------컴포넌트 그리기 관련 로직---------------------------------------------------*/
 
 function paintScreen() {
+  paintBarChart();
   paintTable();
-  //paintBarChart
   paintJsonEditor();
+}
+
+function paintBarChart() {
+  const { getCurPages } = graphPage;
+  const { getState } = mainStore;
+  const mainState = getState();
+  const mainStateArray = [...mainState];
+  const [firstIdx, lastIdx] = getCurPages();
+
+  if (mainState.size === 0 || lastIdx === 0) {
+    graphFigureNumbers.innerHTML = `<p>100</p> <p>50</p> <p>0</p>`;
+    return;
+  }
+
+  const isOnlyOneBar = !!(firstIdx === lastIdx);
+  const stateValues = [...mainState.values()];
+  const slicedValues = isOnlyOneBar
+    ? mainState[firstIdx][1]
+    : stateValues.slice(firstIdx, lastIdx);
+  const slicedMainState = isOnlyOneBar
+    ? mainState[firstIdx][1]
+    : mainStateArray.slice(firstIdx, lastIdx);
+
+  const inPagesMax = Math.max(...slicedValues);
+
+  console.log("max", inPagesMax, slicedValues, firstIdx, lastIdx);
+
+  graphFigureNumbers.innerHTML = `
+  <p>${inPagesMax}</p>
+  <p>${Math.floor(inPagesMax / 2)}</p>
+  <p>0</p>`;
+
+  for (let i = 0; i < BARSNUM; i++) {
+    const [dataId, dataValue] =
+      slicedMainState[i] !== undefined ? slicedMainState[i] : ["", 0];
+    const curBar = document.querySelector(`#bar-${i + 1}`);
+    const curBarName = document.querySelector(`#bar-name-${i + 1}`);
+    const curBarValue = document.querySelector(`#bar-value-${i + 1}`);
+    const heightPercent = (dataValue / inPagesMax) * 100;
+
+    curBarName.innerHTML = dataId;
+    curBarValue.innerHTML = dataValue !== 0 ? dataValue : "";
+    curBar.style.height = `${heightPercent}%`;
+  }
 }
 
 function paintTable() {
@@ -87,8 +137,8 @@ function paintJsonEditor() {
   const jsonString = JSON.stringify(data, null, 4);
   const jsonExample = JSON.stringify(
     [
-      { id: 0, value: 0 },
-      { id: 1, value: 3 },
+      { id: 1, value: 1 },
+      { id: 2, value: 3 },
     ],
     null,
     4
@@ -116,7 +166,7 @@ function debouncedUpdate(e) {
 }
 
 function updateTableValue(e) {
-  const numOnly = /^[1-9][0-9]*$/;
+  const numOnly = /^[1-9][0-9]{0,4}$/;
   const isValueNumber = numOnly.test(e.target.value);
   const { onEditionSetter } = observedInputs;
 
@@ -124,7 +174,7 @@ function updateTableValue(e) {
   if (!isValueNumber) {
     e.target.style.outline = "0.15rem solid rgb(195, 39, 39)";
     tableEditAlert.innerHTML =
-      "! 값에는 자연수만 등록할 수 있습니다.";
+      "! 값에는 다섯자리 이하 자연수만 등록할 수 있습니다.";
     tableEditAlert.style.opacity = 100;
     return;
   }
@@ -146,14 +196,20 @@ function deleteTableValue(e) {
 
   deleteData(dataId);
   onEditionSetter(UNDONAMEMAP.tableUndoBtn, true);
+
+  //그래프 페이지네이션 초기화
+  syncGraphMainStore();
 }
 
 function applyTableData() {
   //아직 수정중인 다른 값 편집기가 있다면 진행 여부 질문
-  const isConfirmed = confirmEdition();
+  const isConfirmed = confirmEdition(UNDONAMEMAP.tableUndoBtn);
   if (!isConfirmed) return;
 
   syncStores(tableStore, mainStore);
+
+  //그래프 페이지네이션 초기화
+  syncGraphMainStore();
 }
 
 function undoTableData() {
@@ -165,7 +221,7 @@ function undoTableData() {
 function addValue(e) {
   const { addData: addMainData } = mainStore;
   const { addData: addTableData } = tableStore;
-  const numOnly = /^[1-9][0-9]*$/;
+  const numOnly = /^[1-9][0-9]{0,4}$/;
   const rawDataId = e.target.graphDataId.value;
   const rawDataValue = e.target.graphDataValue.value;
   const dataId = numOnly.test(rawDataId) ? Number(rawDataId) : rawDataId;
@@ -182,6 +238,10 @@ function addValue(e) {
   }
 
   addTableData({ id: dataId, value: dataValue });
+
+  //그래프 페이지네이션 초기화
+  syncGraphMainStore();
+
   e.target.graphDataId.value = "";
   e.target.graphDataValue.value = "";
   addValueAlert.innerHTML = "";
@@ -214,7 +274,7 @@ function applyJsonInput(e) {
   }
 
   //아직 수정중인 다른 값 편집기가 있다면 진행 여부 질문
-  const isConfirmed = confirmEdition();
+  const isConfirmed = confirmEdition(UNDONAMEMAP.jsonEditorUndoBtn);
   if (!isConfirmed) return;
 
   //메인 스토어와 테이블 스토어 업데이트
@@ -227,12 +287,15 @@ function applyJsonInput(e) {
   jsonEditor.style.outline = "none";
   changeMainState(newState);
   syncStores(mainStore, tableStore);
+
+  //그래프 페이지네이션 초기화
+  syncGraphMainStore();
 }
 
 function verifyJsonInput(jsonStr) {
   if (!isParsable(jsonStr))
     return [
-      '입력하신 서식이 JSON이 아닙니다. 다시 입력해주세요. <br>입력 예시: [{"id":0,"value":0},{"id":1,"value":3}]',
+      '입력하신 서식이 JSON이 아닙니다. 다시 입력해주세요. <br>입력 예시: [{"id":1,"value":1},{"id":2,"value":3}]',
     ];
 
   const jsonPattern =
@@ -242,7 +305,7 @@ function verifyJsonInput(jsonStr) {
   const trimedJsonStr = JSON.stringify(jsonData);
   if (!jsonPattern.test(trimedJsonStr))
     errorList.push(
-      '입력 내용의 서식이 맞지 않습니다. <br>반드시 숫자 값을 지니는 id와 value를 포함하여 적어주세요. <br>입력 예시: [{"id":0,"value":0},{"id":1,"value":3}]'
+      '입력 내용의 서식이 맞지 않습니다. <br>반드시 숫자 값을 지니는 id와 value를 포함하여 적어주세요. <br>입력 예시: [{"id":2,"value":1},{"id":1,"value":3}]'
     );
 
   const idSet = new Set();
@@ -299,14 +362,14 @@ function createStore(observers = []) {
     );
 
     if (invalidItems.length)
-      errorList.push(
-        `! id와 값에는 자연수만 등록할 수 있습니다`
-      );
+      errorList.push(`! id와 값에는 다섯자리 이하 자연수만 등록할 수 있습니다`);
 
     return errorList;
   };
 
   const addData = ({ id, value }) => {
+    const { onEditionGettor } = observedInputs;
+    const onEditionMap = onEditionGettor();
     const errorList = [...isValidInput(id, value)];
 
     //입력값 유효성 검사
@@ -314,6 +377,11 @@ function createStore(observers = []) {
       errorList.push("! id와 값을 모두 입력해주세요");
     if (isDataExist(id))
       errorList.push(`! 이미 id가 ${id}인 데이터가 존재합니다.`);
+    if (onEditionMap[UNDONAMEMAP.tableUndoBtn])
+      errorList.push(
+        `팁: 미처 apply하지 않으신 그래프 값 편집하기의 내용을 apply하시고 다시 시도해보세요`
+      );
+
     //혹시 그래프 값 편집하기의 내용을 아직 apply하지 않으셨나요?
 
     if (!errorList.length) setState({ id, value });
@@ -396,11 +464,13 @@ function createEditionChecker(checkList = [], observers = []) {
   return { onEditionGettor, onEditionSetter };
 }
 
-function confirmEdition() {
+function confirmEdition(componentName) {
   const { onEditionGettor, onEditionSetter } = observedInputs;
   const isOnEditMap = onEditionGettor();
   const isOnEditMapEntries = Object.entries(isOnEditMap);
-  const isOnEdit = isOnEditMapEntries.some(([key, value]) => value === true);
+  const isOnEdit = isOnEditMapEntries.some(
+    ([key, value]) => componentName !== key && value === true
+  );
 
   if (isOnEdit) {
     const isConfirmed = confirm(
@@ -416,6 +486,49 @@ function confirmEdition() {
   return true;
 }
 /*-----------------------------------------------------작성중 여부 기록 로직-----------------------------------------------------*/
+
+/*---------------------------------------------------그래프 페이지네이션 로직---------------------------------------------------*/
+function creatGraphPagenation(maxPage, pages) {
+  const curPages = [0, Math.min(maxPage, pages - 1)];
+
+  const getCurPages = () => [...curPages];
+
+  const setPagesPrev = () => {
+    if (curPages[0] - 5 < 0) {
+      throw new Error("첫 페이지입니다, 더 이전으로 넘길 수 없습니다");
+    }
+    curPages[0] -= 5;
+    curPages[1] -= 5;
+  };
+
+  const setPagesNext = () => {
+    if (curPages[0] + 5 > maxPage && curPages[1] + 5 > maxPage) {
+      throw new Error("마지막 페이지입니다, 페이지를 더 넘길 수 없습니다");
+    }
+    curPages[0] = Math.min(curPages[0] + 5, maxPage);
+    curPages[1] = Math.min(curPages[1] + 5, maxPage);
+  };
+
+  const resetGraphPages = (newmaxPage) => {
+    maxPage = newmaxPage;
+    curPages[0] = 0;
+    curPages[1] = Math.min(maxPage, pages - 1);
+  };
+
+  return { getCurPages, setPagesPrev, setPagesNext, resetGraphPages };
+}
+
+function syncGraphMainStore() {
+  const { resetGraphPages } = graphPage;
+  const { getState } = mainStore;
+
+  const mainState = getState();
+  const mainStateSize = mainState.size;
+
+  resetGraphPages(mainStateSize);
+  paintBarChart();
+}
+/*---------------------------------------------------그래프 페이지네이션 로직---------------------------------------------------*/
 
 /*-------------------------------------------------------기타 범용 로직-------------------------------------------------------*/
 function debounce(func, delay) {
