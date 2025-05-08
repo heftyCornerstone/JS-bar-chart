@@ -90,6 +90,7 @@
 - placeholder로 입력 예시 제공
 - undo 버튼
 - undo 버튼은 활성화 상태가 토글 됨
+- 유효성 검증 통과를 하지 못하면 textarea를 붉은 아웃라인으로 강조
 - 경고 메세지
 
 <br><br><br><br><br>
