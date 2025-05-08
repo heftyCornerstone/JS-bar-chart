@@ -10,6 +10,8 @@
 # 기능별 소개
 
 ### 막대그래프
+---
+
 <p align='center'>
 <img width='70%' src='https://velog.velcdn.com/images/heftycornerstone/post/9fce769a-62a4-4125-ac3f-898689b03221/image.png'>
 <p/>
@@ -26,6 +28,8 @@
 <br><br><br>
 
 ### 그래프 값 편집하기(표 편집기)
+---
+
 <p align='center'>
 <img width='70%' src='https://velog.velcdn.com/images/heftycornerstone/post/824c8a82-5197-4a9d-b088-d6f185a441e5/image.png'>
 <p/>
@@ -46,6 +50,8 @@
 <br><br><br>
 
 ### 그래프에 값 추가하기(인풋 박스 편집기)
+---
+
 <br>
 
 <p align='center'>
@@ -62,6 +68,8 @@
 <br><br><br>
 
 ### 그래프 값 고급 편집
+---
+
 <p align='center'>
 <img width='50%' src='https://velog.velcdn.com/images/heftycornerstone/post/c7f18f85-7a01-4ad0-a1b9-a27f285181e6/image.png'>
 <p/>
