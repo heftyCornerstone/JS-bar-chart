@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./index.css" />
+    <title>Document</title>
+  </head>
+  <body>
+    <header>아이엠파인SD팀_자바스크립트개발자_박산하</header>
+
+    <main>
+      <section>
+        <h3>그래프</h3>
+        <div class="graph-container">
+          <div class="graph-body">
+            <div class="graph-figure">
+              <div class="graph-figure-numbers">
+                <p>100</p>
+                <p>50</p>
+                <p>0</p>
+              </div>
+            </div>
+            <div class="graph-border">
+              <div class="middle-line"></div>
+              <div class="graph-bar-container">
+                <div class="graph-bar" id="bar-1">
+                  <div class="bar-value" id="bar-value-1"></div>
+                  <div class="bar-name" id="bar-name-1"></div>
+                </div>
+                <div class="graph-bar" id="bar-2">
+                  <div class="bar-value" id="bar-value-2"></div>
+                  <div class="bar-name" id="bar-name-2"></div>
+                </div>
+                <div class="graph-bar" id="bar-3">
+                  <div class="bar-value" id="bar-value-3"></div>
+                  <div class="bar-name" id="bar-name-3"></div>
+                </div>
+                <div class="graph-bar" id="bar-4">
+                  <div class="bar-value" id="bar-value-4"></div>
+                  <div class="bar-name" id="bar-name-4"></div>
+                </div>
+                <div class="graph-bar" id="bar-5">
+                  <div class="bar-value" id="bar-value-5"></div>
+                  <div class="bar-name" id="bar-name-5"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="graph-view-navigator">
+            <button id="graph-view-prev">이전 보기</button>
+            <div id="graph-view-page">0/0</div>
+            <button id="graph-view-next">다음 보기</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h3>그래프 값 편집하기</h3>
+        <div class="table-editor-container">
+          <div class="data-table-container">
+            <table id="data-table">
+              <thead>
+                <tr>
+                  <td>ID</td>
+                  <td>값 수정하기</td>
+                  <td>삭제하기</td>
+                </tr>
+              </thead>
+              <tbody class="data-table-body"></tbody>
+            </table>
+          </div>
+          <div class="table-editor-btns">
+            <button id="table-editor-undo" disabled>Undo</button>
+            <button id="table-editor-apply">Apply</button>
+          </div>
+          <div class="error-alert-txt" id="table-edit-alert"></div>
+        </div>
+      </section>
+
+      <section>
+        <h3>그래프에 값 추가하기</h3>
+        <div class="add-value-container">
+          <form action="" id="add-value-form">
+            <input
+              type="text"
+              name="graphDataId"
+              id="graphDataId"
+              placeholder="ID"
+            />
+            <input
+              type="text"
+              name="graphDataValue"
+              id="graphDataValue"
+              placeholder="Value"
+            />
+            <button id="add-value-btn">Add</button>
+          </form>
+          <div class="error-alert-txt" id="add-value-alert"></div>
+        </div>
+      </section>
+
+      <section>
+        <h3>그래프 값 고급 편집</h3>
+        <div>
+          <form action="" id="edit-value-advanced">
+            <textarea name="" id="edit-value-advanced-txt"></textarea>
+            <div class="table-editor-btns">
+              <button
+                class="edit-value-advanced-btn"
+                id="json-editor-undo"
+                type="button"
+                disabled
+              >
+                Undo
+              </button>
+              <button class="edit-value-advanced-btn" id="json-editor-apply">
+                Apply
+              </button>
+            </div>
+          </form>
+          <div class="error-alert-txt" id="edit-value-advanced-alert"></div>
+        </div>
+      </section>
+    </main>
+    <script src="./main.js"></script>
+  </body>
+</html>
