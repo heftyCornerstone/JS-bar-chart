@@ -215,6 +215,7 @@ h3 {
   display: flex;
   justify-content: center;
   width: 8%;
+  transition: height 1s;
 }
 #bar-1 {
   background-color: rgb(113, 205, 217);

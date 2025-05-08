@@ -17,6 +17,8 @@ const graphPages = document.querySelector("#graph-view-page");
 
 window.onload = async () => {
   paintScreen();
+  graphPrevBtn.addEventListener("click", turnGraphPrev);
+  graphNextBtn.addEventListener("click", turnGraphNext);
   dataTable.addEventListener("click", (e) => {
     const isDeleteBtn = e.target.classList.contains("delete-value-btn");
     if (isDeleteBtn) deleteTableValue(e);
@@ -46,6 +48,7 @@ const UNDONAMEMAP = {
 };
 const BARSNUM = 5;
 const observers = {
+  //그래프는 메인 스토어와 그래프 페이지네이션 데이터간에 sync를 맞출 때마다 자동으로 리렌더링 되므로 observers에 없습니다
   main: [paintJsonEditor, paintTable],
   table: [paintTable],
 };
@@ -71,31 +74,37 @@ function paintBarChart() {
   const { getState } = mainStore;
   const mainState = getState();
   const mainStateArray = [...mainState];
-  const [firstIdx, lastIdx] = getCurPages();
+  const { pagesAmount, currentPage, curPages } = getCurPages();
+  const [firstIdx, lastIdx] = curPages;
 
   if (mainState.size === 0 || lastIdx === 0) {
-    graphFigureNumbers.innerHTML = `<p>100</p> <p>50</p> <p>0</p>`;
+    // 데이터가 없으므로 그래프 y축 지표, 페이지 갯수를 표시하고 eary return
+    graphFigureNumbers.innerHTML = `<p>100%</p> <p>50%</p> <p>0%</p>`;
+    graphPages.innerHTML = "0/0";
     return;
   }
 
+  //메인 스토어에서 데이터를 필요한만큼 슬라이스
   const isOnlyOneBar = !!(firstIdx === lastIdx);
   const stateValues = [...mainState.values()];
   const slicedValues = isOnlyOneBar
     ? mainState[firstIdx][1]
-    : stateValues.slice(firstIdx, lastIdx);
+    : stateValues.slice(firstIdx, lastIdx + 1);
   const slicedMainState = isOnlyOneBar
     ? mainState[firstIdx][1]
-    : mainStateArray.slice(firstIdx, lastIdx);
-
+    : mainStateArray.slice(firstIdx, lastIdx + 1);
+  
+  // 슬라이스한 데이터 내에서 가장 큰 값
   const inPagesMax = Math.max(...slicedValues);
 
-  console.log("max", inPagesMax, slicedValues, firstIdx, lastIdx);
-
+  //그래프 y축 지표 그리기
   graphFigureNumbers.innerHTML = `
   <p>${inPagesMax}</p>
   <p>${Math.floor(inPagesMax / 2)}</p>
   <p>0</p>`;
+  graphPages.innerHTML = `${currentPage}/${pagesAmount}`;
 
+  //그래프 바 그리기
   for (let i = 0; i < BARSNUM; i++) {
     const [dataId, dataValue] =
       slicedMainState[i] !== undefined ? slicedMainState[i] : ["", 0];
@@ -114,6 +123,7 @@ function paintTable() {
   const tableState = [...tableStore.getState()];
   const mainState = [...mainStore.getState()];
 
+  //테이블 행 그리기
   dataTbody.innerHTML = "";
   tableState.forEach(([id, value]) => {
     dataTbody.innerHTML += `
@@ -124,6 +134,8 @@ function paintTable() {
     </tr>
     `;
   });
+
+  //apply 버튼 disable 여부 결정하기
   tableApplyBtn.disabled = mainState.length === 0 ? true : false;
 }
 
@@ -159,7 +171,20 @@ function toggleUndoBtnsDisabled() {
 }
 /*---------------------------------------------------컴포넌트 그리기 관련 로직---------------------------------------------------*/
 
-/*----------------------------------------------------데이터 테이블 관리 로직----------------------------------------------------*/
+/*---------------------------------------------------그래프 컴포넌트 UI 로직---------------------------------------------------*/
+function turnGraphPrev() {
+  const { setPagesPrev } = graphPage;
+  setPagesPrev();
+  paintBarChart();
+}
+function turnGraphNext() {
+  const { setPagesNext } = graphPage;
+  setPagesNext();
+  paintBarChart();
+}
+/*---------------------------------------------------그래프 컴포넌트 UI 로직---------------------------------------------------*/
+
+/*----------------------------------------------------데이터 테이블 UI 로직----------------------------------------------------*/
 function debouncedUpdate(e) {
   const debouncedUpdate = debounce(updateTableValue, 500);
   debouncedUpdate(e);
@@ -489,30 +514,42 @@ function confirmEdition(componentName) {
 
 /*---------------------------------------------------그래프 페이지네이션 로직---------------------------------------------------*/
 function creatGraphPagenation(maxPage, pages) {
+  let pagesAmount = Math.ceil(maxPage / pages);
+  let currentPage = 1;
   const curPages = [0, Math.min(maxPage, pages - 1)];
 
-  const getCurPages = () => [...curPages];
+  const getCurPages = () => {
+    return {
+      pagesAmount,
+      currentPage,
+      curPages: [...curPages],
+    };
+  };
 
   const setPagesPrev = () => {
-    if (curPages[0] - 5 < 0) {
-      throw new Error("첫 페이지입니다, 더 이전으로 넘길 수 없습니다");
+    if (curPages[0] - pages < 0) {
+      return ["첫 페이지입니다, 더 이전으로 넘길 수 없습니다"];
     }
-    curPages[0] -= 5;
-    curPages[1] -= 5;
+    const newFirstPage = curPages[0] - pages;
+    curPages[0] = newFirstPage;
+    curPages[1] = newFirstPage+pages;
+    currentPage -= 1;
   };
 
   const setPagesNext = () => {
-    if (curPages[0] + 5 > maxPage && curPages[1] + 5 > maxPage) {
-      throw new Error("마지막 페이지입니다, 페이지를 더 넘길 수 없습니다");
+    if (curPages[0] + pages > maxPage && curPages[1] + pages > maxPage) {
+      return ["마지막 페이지입니다, 페이지를 더 넘길 수 없습니다"];
     }
-    curPages[0] = Math.min(curPages[0] + 5, maxPage);
-    curPages[1] = Math.min(curPages[1] + 5, maxPage);
+    curPages[0] = Math.min(curPages[0] + pages, maxPage);
+    curPages[1] = Math.min(curPages[1] + pages, maxPage);
+    currentPage += 1;
   };
 
   const resetGraphPages = (newmaxPage) => {
     maxPage = newmaxPage;
+    pagesAmount = Math.ceil(newmaxPage / pages);
     curPages[0] = 0;
-    curPages[1] = Math.min(maxPage, pages - 1);
+    curPages[1] = Math.min(newmaxPage, pages - 1);
   };
 
   return { getCurPages, setPagesPrev, setPagesNext, resetGraphPages };
