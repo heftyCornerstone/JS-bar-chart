@@ -203,7 +203,7 @@ function turnGraphNext() {
 
 /*----------------------------------------------------데이터 테이블 UI 로직----------------------------------------------------*/
 function debouncedUpdate(e) {
-  const debouncedUpdate = debounce(updateTableValue, 500);
+  const debouncedUpdate = debounce(updateTableValue, 300);
   debouncedUpdate(e);
 }
 
@@ -214,6 +214,8 @@ function updateTableValue(e) {
   const isValueNumber = numOnly.test(e.target.value);
   const { onEditionSetter } = observedInputs;
   const { setState: setTableState } = tableStore;
+
+  onEditionSetter(COMPONENTNAMEMAP.table, true);
 
   tableApplyBtn.disabled = !isValueNumber;
   if (!isValueNumber) {
@@ -227,7 +229,6 @@ function updateTableValue(e) {
   e.target.style.outline = "none";
   tableEditAlert.innerHTML = "";
   tableEditAlert.style.opacity = 0;
-  onEditionSetter(COMPONENTNAMEMAP.table, true);
   setTableState({ id: Number(targetId), value: Number(targetValue) });
 }
 
@@ -256,6 +257,10 @@ function applyTableData() {
 
 function undoTableData() {
   const { onEditionSetter } = observedInputs;
+  
+  //테이블의 경고 문구 지우기
+  tableEditAlert.innerHTML = "";
+
   syncStores(mainStore, tableStore);
 
   onEditionSetter(COMPONENTNAMEMAP.table, false);
