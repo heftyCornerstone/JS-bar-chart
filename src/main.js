@@ -48,8 +48,7 @@ const COMPONENTNAMEMAP = {
 };
 const GRAPHBARSNUM = 5;
 const observers = {
-  //그래프는 메인 스토어와 그래프 페이지네이션 데이터간에 sync를 맞출 때마다 자동으로 리렌더링 되므로 observers에 없습니다
-  main: [paintJsonEditor, paintTable],
+  main: [paintJsonEditor, paintTable, syncGraphMainStore],
   table: [paintTable],
 };
 const mainStore = createStore(observers.main);
@@ -202,10 +201,7 @@ function turnGraphNext() {
 /*---------------------------------------------------그래프 컴포넌트 UI 로직---------------------------------------------------*/
 
 /*----------------------------------------------------데이터 테이블 UI 로직----------------------------------------------------*/
-function debouncedUpdate(e) {
-  const debouncedUpdate = debounce(updateTableValue, 300);
-  debouncedUpdate(e);
-}
+const debouncedUpdate = debounce(updateTableValue, 300);
 
 function updateTableValue(e) {
   const numOnly = /^[1-9][0-9]{0,4}$/;
@@ -250,9 +246,6 @@ function applyTableData() {
   if (!isConfirmed) return;
 
   syncStores(tableStore, mainStore);
-
-  //그래프와 그래프 페이지네이션 초기화
-  syncGraphMainStore();
 }
 
 function undoTableData() {
@@ -288,9 +281,6 @@ function addValue(e) {
   }
 
   addTableData({ id: dataId, value: dataValue });
-
-  //그래프와 그래프 페이지네이션 초기화
-  syncGraphMainStore();
 
   e.target.graphDataId.value = "";
   e.target.graphDataValue.value = "";
@@ -340,9 +330,6 @@ function applyJsonInput(e) {
   jsonEditor.style.outline = "none";
   changeMainState(newState);
   syncStores(mainStore, tableStore);
-
-  //그래프와 그래프 페이지네이션 초기화
-  syncGraphMainStore();
 }
 
 function verifyJsonInput(jsonStr) {
@@ -577,6 +564,7 @@ function creatGraphPagenation(maxPage, pages) {
   const resetGraphPages = (newmaxPage) => {
     maxPage = newmaxPage;
     pagesAmount = Math.ceil(newmaxPage / pages);
+    currentPage = 1;
     curPages[0] = 0;
     curPages[1] = Math.min(newmaxPage, pages - 1);
   };
@@ -585,6 +573,7 @@ function creatGraphPagenation(maxPage, pages) {
 }
 
 function syncGraphMainStore() {
+  //그래프와 그래프 페이지네이션 초기화
   const { resetGraphPages } = graphPage;
   const { getState } = mainStore;
 
