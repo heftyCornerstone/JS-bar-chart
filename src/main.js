@@ -14,11 +14,27 @@ const graphFigureNumbers = document.querySelector(".graph-figure-numbers");
 const graphPrevBtn = document.querySelector("#graph-view-prev");
 const graphNextBtn = document.querySelector("#graph-view-next");
 const graphPages = document.querySelector("#graph-view-page");
+const searchBarCon = document.querySelector(".search-container");
+const searchBar = document.querySelector("#search");
+const searchById = document.querySelector("#searchById");
+const searchByValue = document.querySelector("#searchByValue");
 
 window.onload = async () => {
   paintScreen();
   graphPrevBtn.addEventListener("click", turnGraphPrev);
   graphNextBtn.addEventListener("click", turnGraphNext);
+  searchBarCon.addEventListener("click", (e) => {
+    if (e.target.tagName !== "BUTTON") return;
+    const { setMode } = searchingModeState();
+    const curBtn =
+      e.target.id === "searchById" ? "searchById" : "searchByValue";
+    setMode(curBtn);
+  });
+  searchBar.addEventListener("input", ()=>{
+    const { getMode } = searchingModeState();
+    const curBtn = getMode();
+    getSearchData(curBtn);
+  });
   dataTable.addEventListener("click", (e) => {
     const isDeleteBtn = e.target.classList.contains("delete-value-btn");
     if (isDeleteBtn) deleteTableValue(e);
@@ -199,6 +215,49 @@ function turnGraphNext() {
   paintBarChart();
 }
 /*---------------------------------------------------그래프 컴포넌트 UI 로직---------------------------------------------------*/
+/*---------------------------------------------------검색바 UI 로직---------------------------------------------------*/
+//searchBar
+
+function getSearchData(btnId) {
+  const { changeState: changeTableState } = tableStore;
+  const inputVal = searchBar.value;
+  const numOnly = /^[1-9][0-9]{0,4}$/;
+  const isValueNumber = numOnly.test(inputVal);
+
+  if (!isValueNumber) {
+    searchBar.style.outline = "0.15rem solid #ff0000";
+    return;
+  }
+
+  searchBar.style.outline = "none";
+
+  const searchedDataMap = searchData(inputVal, btnId);
+  //todo
+  // 테이블 업데이트
+  changeTableState(searchedDataMap);
+  tableUndoBtn.disabled = false; //궁여지책
+
+  // 그래프 업데이트
+}
+
+function searchData(inputVal, mode) {
+  const { getState } = mainStore;
+  const mainState = getState();
+  const dataList = mainState.entries();
+
+  const searchedDataMap = new Map();
+  dataList.forEach(([key, value]) => {
+    const curData = mode === "searchById" ? String(key) : String(value);
+    if (!curData.match(inputVal)) return;
+
+    const matchingIdx = curData.match(inputVal).index;
+    if (matchingIdx === 0) searchedDataMap.set(key, value);
+  });
+
+  return searchedDataMap;
+}
+
+/*---------------------------------------------------검색바 UI 로직---------------------------------------------------*/
 
 /*----------------------------------------------------데이터 테이블 UI 로직----------------------------------------------------*/
 const debouncedUpdate = debounce(updateTableValue, 300);
@@ -250,7 +309,7 @@ function applyTableData() {
 
 function undoTableData() {
   const { onEditionSetter } = observedInputs;
-  
+
   //테이블의 경고 문구 지우기
   tableEditAlert.innerHTML = "";
 
@@ -584,7 +643,20 @@ function syncGraphMainStore() {
   paintBarChart();
 }
 /*---------------------------------------------------그래프 페이지네이션 로직---------------------------------------------------*/
+/*-------------------------------------------------------검색 모드 관리-------------------------------------------------------*/
+function searchingModeState() {
+  let searchingMode = "searchById";
+  const setMode = (mode) => {
+    searchingMode = mode;
+  };
+  const getMode = () => searchingMode;
 
+  return {
+    setMode,
+    getMode,
+  };
+}
+/*-------------------------------------------------------검색 모드 관리-------------------------------------------------------*/
 /*-------------------------------------------------------기타 범용 로직-------------------------------------------------------*/
 function debounce(func, delay) {
   let prevEvent;
